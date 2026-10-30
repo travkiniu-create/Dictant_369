@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Диктант — словарные слова</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 25px 20px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+  }
+  h1 { font-size: 20px; color: #444; margin-bottom: 5px; }
+  .subtitle { color: #888; font-size: 13px; margin-bottom: 15px; }
+
+  .stats {
+    display: flex;
+    justify-content: space-around;
+    background: #f4f6fb;
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 15px;
+    font-size: 13px;
+  }
+  .stat b { display: block; font-size: 18px; color: #5a4fcf; }
+
+  .word-display {
+    font-size: 22px;
+    color: #888;
+    margin: 10px 0 5px;
+    min-height: 30px;
+    font-style: italic;
+  }
+
+  .btn-speaker {
+    background: #f4f0ff;
+    border: 2px solid #764ba2;
+    color: #764ba2;
+    font-size: 28px;
+    border-radius: 50%;
+    width: 70px;
+    height: 70px;
+    cursor: pointer;
+    margin: 10px auto 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s;
+  }
+  .btn-speaker:active { transform: scale(0.92); }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 14px;
+    font-size: 22px;
+    text-align: center;
+    border: 3px solid #d0d5e8;
+    border-radius: 12px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  input[type="text"]:focus { border-color: #764ba2; }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 17px;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border: none;
+    border-radius: 12px;
+    margin-top: 12px;
+    cursor: pointer;
+  }
+  .btn:active { transform: scale(0.98); }
+
+  .feedback {
+    font-size: 18px;
+    font-weight: 700;
+    min-height: 28px;
+    margin-top: 15px;
+    white-space: pre-line;
+  }
+  .correct { color: #2ecc71; }
+  .wrong { color: #e74c3c; }
+  .info { color: #3498db; }
+
+  .settings {
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+    padding-top: 12px;
+    font-size: 13px;
+    color: #666;
+    text-align: left;
+  }
+  .settings label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+    cursor: pointer;
+  }
+  .settings input[type="checkbox"] {
+    width: 18px; height: 18px; accent-color: #764ba2;
+  }
+  .reset {
+    margin-top: 10px;
+    background: #f0f0f5;
+    color: #555;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .final-stats {
+    text-align: left;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>📚 Диктант — словарные слова</h1>
+  <p class="subtitle">Слушай слово и печатай его</p>
+
+  <div class="stats">
+    <div class="stat">Осталось <b id="leftCount">0</b></div>
+    <div class="stat">Сдано <b id="doneCount">0</b></div>
+    <div class="stat">Попыток <b id="attemptCount">0</b></div>
+  </div>
+
+  <div class="word-display" id="wordDisplay">Нажми 🔊</div>
+
+  <button class="btn-speaker" id="speakerBtn" title="Прослушать">🔊</button>
+
+  <input type="text" id="answer" placeholder="Введи слово" autocomplete="off" autocapitalize="off">
+
+  <button class="btn" id="checkBtn">Проверить</button>
+
+  <div class="feedback" id="feedback"></div>
+
+  <div class="settings">
+    <label><input type="checkbox" id="voiceCheck" checked> 🔊 Озвучивать слова</label>
+    <label><input type="checkbox" id="autoPlayCheck" checked> ▶️ Озвучивать сразу после проверки</label>
+    <button class="reset" id="resetBtn">Сбросить прогресс</button>
+    <div id="finalStats" class="final-stats"></div>
+  </div>
+</div>
+
+<script>
+// ============ СЛОВАРЬ (отредактируйте под себя) ============
+const WORDS = [
+  "Абажур", "Абрикос", "Август", "Автобус", "Автомобиль",
+  "Автор", "Агроном", "Адрес", "Аквариум", "Акварель",
+  "Актёр", "Аллея", "Альбом", "Ананас", "Апельсин",
+  "Аптека", "Арбуз", "Артист", "Бабочка", "Багаж",
+  "Банан", "Барабан", "Барсук", "Бассейн", "Беседа",
+  "Беседка", "Берег", "Берёза", "Блеснуть", "Богатство",
+  "Ботинки", "Быстро", "Вагон", "Ванна", "Варежка",
+  "Василёк", "Вверху", "Вежливый", "Велосипед", "Весело",
+  "Ветер", "Внизу", "Вокзал", "Воробей", "Ворона",
+  "Ворота", "Восемь", "Воскресенье", "Восток", "Вратарь",
+  "Вторник", "Газета", "Газон", "Галерея", "Гараж",
+  "Гвоздика", "Герой", "Город", "Государство", "Грамм",
+  "Грамматика", "Двенадцать", "Девочка", "Дежурный", "Декабрь",
+  "Деликатный", "Деревня", "Директор", "Дирижёр", "До свидания",
+  "Доктор", "Долго", "Дорога", "Дрожжи", "Ездить",
+  "Жаворонок", "Железо", "Жёлтый", "Живопись", "Жираф",
+  "Жжёт", "Жонглёр", "Журавль", "Забавный", "Завтрак",
+  "Запад", "Задача", "Заяц", "Здание", "Здесь",
+  "Здоровье", "Здравствуйте", "Земляника", "Извините", "Изображение",
+  "Инженер", "Интерес", "Искусный", "Искусство", "Источник",
+  "Какао", "Календарь", "Канарейка", "Каникулы", "Капитан",
+  "Капуста", "Картина", "Картофель", "Касса", "Кастрюля",
+  "Кефир", "Килограмм", "Кисель", "Класс", "Колбаса",
+  "Коллектив", "Колокольчик", "Команда", "Командир", "Комар",
+  "Компот", "Конверт", "Коньки", "Корзина", "Корова",
+  "Космос", "Космонавт", "Костюм", "Котлета", "Красота",
+  "Кроссовки", "Курица", "Лапша", "Легенда", "Лестница",
+  "Лиса", "Лото", "Лучше", "Лягушка", "Магазин",
+  "Макароны", "Мальчик", "Мандарин", "Маршрут", "Масса",
+  "Медведь", "Медленно", "Мебель", "Мелодия", "Метро",
+  "Метель", "Мешок", "Месяц", "Мимоза", "Микстура",
+  "Молоко", "Морковь", "Мороз", "Москва", "Мотылёк",
+  "Музей", "Налево", "Направо", "Народ", "Натюрморт",
+  "Национальность", "Невзначай", "Неделя", "Обезьяна", "Огурец",
+  "Одежда", "Один", "Одиннадцать", "Одуванчик", "Океан",
+  "Октябрь", "Оладьи", "Осина", "Остров", "Отечество",
+  "Отчизна", "Отличник", "Очаг", "Ошибка", "Пальто",
+  "Пенал", "Петух", "Пирог", "Платок", "Победа",
+  "Погода", "Подсолнух", "Пожалуйста", "Пойти", "Полотенце",
+  "Помидор", "Помощник", "Понедельник", "Попугай", "Портфель",
+  "Посуда", "Потом", "Почтальон", "Правительство", "Праздник",
+  "Прекрасный", "Прежний", "Привет", "Природа", "Продавец",
+  "Пшеница", "Ракета", "Работа", "Растение", "Ребёнок",
+  "Ребята", "Республика", "Рисунок", "Ромашка", "Россия",
+  "Русский", "Рябина", "Саженец", "Сапоги", "Север",
+  "Сентябрь", "Сирень", "Сковорода", "Словарь", "Смородина",
+  "Снегирь", "Собака", "Сначала", "Солдат", "Солома",
+  "Соловей", "Сорока", "Ссора", "Стакан", "Статья",
+  "Суббота", "Сумма", "Счастье", "Таблетка", "Телеграмма",
+  "Телефон", "Теннис", "Тетрадь", "Ток", "Товарищ",
+  "Топор", "Трамвай", "Трактор", "Троллейбус", "Творог",
+  "Ужин", "Улица", "Урожай", "Участвовать", "Ученик",
+  "Ученица", "Учитель", "Учительница", "Фамилия", "Федерация",
+  "Февраль", "Футбол", "Хоккей", "Хорошо", "Художественное",
+  "Цемент", "Цилиндр", "Циркуль", "Цистерна", "Цыган",
+  "Цыплёнок", "Цыпочки", "Цыц", "Чай", "Часто",
+  "Человек", "Чемодан", "Чёрный", "Четыре", "Читать",
+  "Чувство", "Шофёр", "Шоколад", "Щи", "Щавель",
+  "Экскурсия", "Экспресс", "Экипаж", "Этаж", "Юный",
+  "Яблоко", "Ягода", "Январь", "Язык", "Яичница"
+];
+
+const RETRY_GAP = 3; // через сколько слов возвращать ошибочное
+
+// ============ ЭЛЕМЕНТЫ ============
+const wordDisplay = document.getElementById('wordDisplay');
+const answerEl    = document.getElementById('answer');
+const feedbackEl  = document.getElementById('feedback');
+const checkBtn    = document.getElementById('checkBtn');
+const speakerBtn  = document.getElementById('speakerBtn');
+const resetBtn    = document.getElementById('resetBtn');
+const voiceCheck  = document.getElementById('voiceCheck');
+const autoPlayCheck = document.getElementById('autoPlayCheck');
+const leftCountEl   = document.getElementById('leftCount');
+const doneCountEl   = document.getElementById('doneCount');
+const attemptCountEl= document.getElementById('attemptCount');
+const finalStatsEl  = document.getElementById('finalStats');
+
+// ============ СОСТОЯНИЕ ============
+let queue = [];
+let totalWords = 0;
+let totalAttempts = 0;
+let errors = {};
+let firstTryOk = new Set();
+let seen = new Set();
+
+// ============ ОЗВУЧКА ============
+let voiceRu = null;
+
+function loadVoices() {
+  const voices = speechSynthesis.getVoices();
+  voiceRu = voices.find(v => v.lang.startsWith('ru')) || voices[0] || null;
+}
+if ('speechSynthesis' in window) {
+  loadVoices();
+  speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function speak(text) {
+  if (!voiceCheck.checked) return;
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ru-RU';
+  if (voiceRu) u.voice = voiceRu;
+  u.rate = 0.85; // чуть медленнее — для диктанта
+  speechSynthesis.speak(u);
+}
+
+// ============ ЛОГИКА СЕССИИ ============
+function normalize(s) {
+  return s.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+function startSession() {
+  queue = WORDS.slice();
+  shuffle(queue);
+  totalWords = queue.length;
+  totalAttempts = 0;
+  errors = {};
+  firstTryOk = new Set();
+  seen = new Set();
+  finalStatsEl.textContent = '';
+  updateStats();
+  newWord();
+}
+
+function currentWord() {
+  return queue.length ? queue[0] : null;
+}
+
+function submitAnswer(answer) {
+  const word = queue.shift();
+  totalAttempts++;
+  const isCorrect = normalize(answer) === normalize(word);
+
+  if (isCorrect) {
+    if (!seen.has(word)) firstTryOk.add(word);
+  } else {
+    errors[word] = (errors[word] || 0) + 1;
+    const pos = Math.min(RETRY_GAP, queue.length);
+    queue.splice(pos, 0, word);
+  }
+
+  seen.add(word);
+  return { isCorrect, word, finished: queue.length === 0 };
+}
+
+function updateStats() {
+  leftCountEl.textContent = queue.length;
+  doneCountEl.textContent = totalWords - queue.length;
+  attemptCountEl.textContent = totalAttempts;
+}
+
+function newWord() {
+  const w = currentWord();
+  if (!w) {
+    finishSession();
+    return;
+  }
+  wordDisplay.textContent = '🔊 Слушай и печатай';
+  answerEl.value = '';
+  answerEl.focus();
+  feedbackEl.textContent = '';
+  feedbackEl.className = 'feedback';
+
+  // Автоозвучка нового слова
+  if (autoPlayCheck.checked) {
+    setTimeout(() => speak(w), 200);
+  }
+}
+
+function check() {
+  if (!currentWord()) return;
+  const answer = answerEl.value.trim();
+  if (answer === '') return;
+
+  const { isCorrect, word, finished } = submitAnswer(answer);
+
+  if (isCorrect) {
+    feedbackEl.textContent = '✅ Верно!';
+    feedbackEl.className = 'feedback correct';
+    speak('Верно!');
+  } else {
+    feedbackEl.textContent = `❌ Правильно: ${word}`;
+    feedbackEl.className = 'feedback wrong';
+    speak('Неправильно. Правильно: ' + word);
+  }
+
+  updateStats();
+
+  if (finished) {
+    setTimeout(finishSession, 1500);
+  } else {
+    setTimeout(newWord, 1500);
+  }
+}
+
+function finishSession() {
+  const lines = [];
+  lines.push('🎉 Готово! Все слова сданы.');
+  lines.push(`Всего попыток: ${totalAttempts}`);
+  lines.push(`Слов с первой попытки: ${firstTryOk.size} из ${totalWords}`);
+  if (Object.keys(errors).length) {
+    lines.push('Трудные слова:');
+    const sorted = Object.entries(errors).sort((a, b) => b[1] - a[1]);
+    sorted.forEach(([w, n]) => lines.push(`  • ${w} — ошибок: ${n}`));
+  }
+  feedbackEl.textContent = '';
+  finalStatsEl.textContent = lines.join('\n');
+  wordDisplay.textContent = 'Готово!';
+  answerEl.disabled = true;
+  checkBtn.disabled = true;
+  speakerBtn.disabled = true;
+}
+
+// ============ ОБРАБОТЧИКИ ============
+checkBtn.addEventListener('click', check);
+speakerBtn.addEventListener('click', () => {
+  const w = currentWord();
+  if (w) speak(w);
+});
+answerEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter') check();
+});
+resetBtn.addEventListener('click', () => {
+  answerEl.disabled = false;
+  checkBtn.disabled = false;
+  speakerBtn.disabled = false;
+  startSession();
+});
+
+// ============ СТАРТ ============
+startSession();
+</script>
+</body>
+</html>
